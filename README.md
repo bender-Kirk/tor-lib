@@ -1,5 +1,6 @@
 # tor-lib
-tor-lib is a c++ lib wich can connect and creat hidden service
+
+`tor-lib` is a C++ library that can connect to the Tor network and create hidden services.
 
 ## Installation
 
@@ -10,3 +11,4 @@ git clone https://github.com/roger-the-aghartian/tor-lib
 cd tor-lib
 sudo bash installation.sh
 ```
+
