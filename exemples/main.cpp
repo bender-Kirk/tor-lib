@@ -1,4 +1,4 @@
-#include "tor-lib.h"
+#include "../src/tor-lib.h"
 
 
 int main(){
