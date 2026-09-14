@@ -147,7 +147,7 @@ inline std::string tor_curl(const std::string& url, std::string user_agent, bool
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, manage_data);
 
     //permet de récuprer le resultat de curl dans la variable resultat
-    std::string resultat{nullptr};
+    std::string resultat{""};
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &resultat);
 
     //l'option 0L est mise pour eviter les redirection tandis que le 1L lui les accepte
