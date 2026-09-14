@@ -38,3 +38,9 @@ int main(){
 ```bash
 g++ main.cpp -lcurl -o main
 ```
+## Use : 
+
+```bash
+sudo systemctl start tor
+./main
+```
