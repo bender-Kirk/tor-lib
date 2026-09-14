@@ -16,7 +16,7 @@ sudo bash install.sh
 Curl the tor project website
 
 ```cpp
-#include "tor_sock.h"
+#include "tor-lib.h"
 
 int main(){
 
