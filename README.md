@@ -44,3 +44,7 @@ g++ main.cpp -lcurl -o main
 sudo systemctl start tor
 ./main
 ```
+## Limitations
+- Requires sudo for hidden service creation
+- Tor daemon must be running
+- Header-only library
