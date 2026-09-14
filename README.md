@@ -2,7 +2,7 @@
 
 `tor-lib` is a C++ library that can connect to the Tor network and create hidden services.
 
-## Installation :
+## Installation
 
 Clone the repository and run the installation script:
 
@@ -12,14 +12,14 @@ cd tor-lib
 sudo bash install.sh
 ```
 
-Install.sh run the following commandes : 
+The install.sh script runs the following commands: 
 ```bash
 apt install libcurl4-openssl-dev && apt install tor
 ```
 
-## Exemples : 
+## Examples
 
-Curl the tor project website
+**Fetch content from a Tor .onion website:**
 
 ```cpp
 #include "tor-lib.h"
@@ -33,18 +33,22 @@ int main(){
     return 0;
 }
 ```
-## Compilation :
+
+## Compilation
 
 ```bash
 g++ main.cpp -lcurl -o main
 ```
-## Use : 
+
+## Usage
 
 ```bash
 sudo systemctl start tor
 ./main
 ```
+
 ## Limitations
+
 - Requires sudo for hidden service creation
 - Tor daemon must be running
 - Header-only library
