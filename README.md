@@ -11,6 +11,12 @@ git clone https://github.com/bender-Kirk/tor-lib
 cd tor-lib
 sudo bash install.sh
 ```
+
+Install.sh run the following commandes : 
+```bash
+apt install libcurl4-openssl-dev && apt install tor
+```
+
 ## Exemples : 
 
 Curl the tor project website
