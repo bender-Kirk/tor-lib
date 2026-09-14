@@ -2,7 +2,7 @@
 
 `tor-lib` is a C++ library that can connect to the Tor network and create hidden services.
 
-## Installation
+## Installation :
 
 Clone the repository and run the installation script:
 
@@ -26,4 +26,9 @@ int main(){
 
     return 0;
 }
+```
+## Compilation :
+
+```bash
+g++ main.cpp -lcurl -o main
 ```
