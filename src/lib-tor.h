@@ -1,24 +1,17 @@
 #include <curl/curl.h>
-#include <curl/easy.h>
 #include <iostream>
 #include <string>
 #include <stdexcept>
 
 
-using std::string;
-using std::cout;
-using std::endl;
-using std::runtime_error;
 
 
-
-
-inline bool ssl_verification(string url){
+inline bool ssl_verification(std::string url){
 
     CURL* curl = curl_easy_init();
 
     if (curl == nullptr){
-        throw  runtime_error("CURL err : curl == nullptr");
+        throw  std::runtime_error("CURL err : curl == nullptr");
         return false;
     }
 
@@ -64,7 +57,7 @@ inline bool ssl_verification(string url){
 
 
 
-inline bool https_verification(string url){
+inline bool https_verification(std::string url){
 
     CURL* curl = curl_easy_init();
 
@@ -121,7 +114,7 @@ inline bool https_verification(string url){
 static inline size_t manage_data(char* data, size_t size, size_t nmemb, void* userdata){
 
     //permet de remplire la variable de sortie avec le contenut de retour
-    string* resultat = static_cast<string*>(userdata);
+    std::string* resultat = static_cast<std::string*>(userdata);
     resultat->append(data, size * nmemb);
 
     return size*nmemb;
@@ -129,7 +122,7 @@ static inline size_t manage_data(char* data, size_t size, size_t nmemb, void* us
 
 
 
-inline string tor_curl(const string& url, string user_agent, bool redirection){
+inline std::string tor_curl(const std::string& url, std::string user_agent, bool redirection){
 
     //initialisation de curl
     CURL* curl = curl_easy_init();
@@ -137,7 +130,7 @@ inline string tor_curl(const string& url, string user_agent, bool redirection){
 
     if (curl == nullptr){
         curl_easy_cleanup(curl);
-        throw runtime_error(std::string("CURL error: \033[31m curl == nullptr \033[0m"));
+        throw std::runtime_error(std::string("CURL error: \033[31m curl == nullptr \033[0m"));
     }
 
 
@@ -154,7 +147,7 @@ inline string tor_curl(const string& url, string user_agent, bool redirection){
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, manage_data);
 
     //permet de récuprer le resultat de curl dans la variable resultat
-    string resultat{""};
+    std::string resultat{nullptr};
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &resultat);
 
     //l'option 0L est mise pour eviter les redirection tandis que le 1L lui les accepte
@@ -173,7 +166,7 @@ inline string tor_curl(const string& url, string user_agent, bool redirection){
     CURLcode res = curl_easy_perform(curl);
 
     if (res != CURLE_OK){
-         throw std::runtime_error(std::string("CURL error: ") + curl_easy_strerror(res));
+        throw std::runtime_error(std::string("CURL error: ") + curl_easy_strerror(res));
         curl_easy_cleanup(curl);
         return "err";
     }
