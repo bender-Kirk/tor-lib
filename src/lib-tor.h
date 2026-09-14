@@ -26,10 +26,10 @@ inline bool ssl_verification(std::string url){
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
 
-    // Active la récupération des informations du certificat
+    // Enable certificate information retrieval
     curl_easy_setopt(curl, CURLOPT_CERTINFO, 1L);
 
-    curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);  // HEAD request seulement
+    curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);  // HEAD request only
 
     curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 90L);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 120L);
@@ -76,10 +76,10 @@ inline bool https_verification(std::string url){
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
 
-    // Active la récupération des informations du certificat
+    // Enable certificate information retrieval
     curl_easy_setopt(curl, CURLOPT_CERTINFO, 1L);
 
-    curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);  // HEAD request seulement
+    curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);  // HEAD request only
 
     curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 90L);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 120L);
@@ -114,10 +114,10 @@ inline bool https_verification(std::string url){
 
 
 
-//fonction callback
+// Callback function
 static inline size_t manage_data(char* data, size_t size, size_t nmemb, void* userdata){
 
-    //permet de remplire la variable de sortie avec le contenut de retour
+    // Fill the output variable with the return content
     std::string* resultat = static_cast<std::string*>(userdata);
     resultat->append(data, size * nmemb);
 
@@ -128,7 +128,7 @@ static inline size_t manage_data(char* data, size_t size, size_t nmemb, void* us
 
 inline std::string tor_curl(const std::string& url, std::string user_agent, bool redirection){
 
-    //initialisation de curl
+    // Initialize curl
     CURL* curl = curl_easy_init();
 
 
@@ -137,23 +137,23 @@ inline std::string tor_curl(const std::string& url, std::string user_agent, bool
     }
 
 
-    //initialisation du socket5 avec l'option h pour la résolution dns
+    // Initialize SOCKS5 with 'h' option for DNS resolution
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_PROXY, "socks5h://127.0.0.1:9050");
 
-    //deifinition de l'user-agent
+    // Define user-agent
     if (!user_agent.empty()){
         curl_easy_setopt(curl, CURLOPT_USERAGENT, user_agent.c_str());
     }
 
-    //inscription de la fonction callback "manage_data" au moment de l'apelle
+    // Register callback function "manage_data" on call
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, manage_data);
 
-    //permet de récuprer le resultat de curl dans la variable resultat
+    // Retrieve curl result in the result variable
     std::string resultat{""};
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &resultat);
 
-    //l'option 0L est mise pour eviter les redirection tandis que le 1L lui les accepte
+    // 0L option is set to avoid redirects, while 1L accepts them
     if (redirection == false){
 
         curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 0L); 
@@ -182,11 +182,9 @@ inline std::string tor_curl(const std::string& url, std::string user_agent, bool
 
 
 
-
-
 inline bool creat_service(std::string name, std::string public_port, std::string local_port){
 
-    //création et configuration des repertoires liée au hidden service
+    // Create and configure directories related to hidden service
 
 
     std::string command_hidden_service = "sudo mkdir -p /var/lib/tor/" + name + " && ";
@@ -194,16 +192,16 @@ inline bool creat_service(std::string name, std::string public_port, std::string
     command_hidden_service += "sudo chmod 700 /var/lib/tor/" + name;
 
     if (std::system(command_hidden_service.c_str()) != 0 ){
-        std::cerr << "création des fichier na pas été faites\n";
+        std::cerr << "File creation was not completed\n";
         return false;
     }
 
-    //modification du fichier de configuration /etc/tor/torrc pour configurer le hidden service
+    // Modify the /etc/tor/torrc configuration file to configure the hidden service
     std::ofstream torcc("/etc/tor/torrc", std::ios::app);
 
 
     if (!torcc.is_open()){
-        std::cerr << "torcc n'est pas ouvert\n";
+        std::cerr << "torrc file could not be opened\n";
         return false;
     }
 
@@ -213,23 +211,23 @@ inline bool creat_service(std::string name, std::string public_port, std::string
     torcc.close();
 
     if (std::system("sudo systemctl restart tor") != 0 || std::system("sudo systemctl is-active --quiet tor") != 0){
-        std::cerr << "tor na pas redemarrer\n";
+        std::cerr << "Tor failed to restart\n";
         return false;
     }
 
 
-    //on a besoins de ce temps d'attantes sans quoi on lis le fichier avant même que il soit créer
+    // We need this wait time, otherwise we read the file before it is created
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     std::ifstream hostname("/var/lib/tor/" + name + "/hostname");
 
     if (!hostname.is_open()){
-        std::cerr << "fichier non ouvert\n" << "/var/lib/tor/" + name +"/hostname\n";
+        std::cerr << "File could not be opened\n" << "/var/lib/tor/" + name +"/hostname\n";
         return false;
     }
 
     std::string content = "";
     if(!std::getline(hostname, content)){
-        std::cerr << "impossible de lire le fichier\n";
+        std::cerr << "Unable to read file\n";
         return false;
     }
 
