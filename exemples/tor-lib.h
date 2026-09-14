@@ -1,6 +1,4 @@
-#include <cstddef>
 #include <curl/curl.h>
-#include <curl/easy.h>
 #include <iostream>
 #include <string>
 #include <stdexcept>
