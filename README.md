@@ -9,6 +9,6 @@ Clone the repository and run the installation script:
 ```bash
 git clone https://github.com/roger-the-aghartian/tor-lib
 cd tor-lib
-sudo bash installation.sh
+sudo bash install.sh
 ```
 
