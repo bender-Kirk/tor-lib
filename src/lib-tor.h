@@ -2,6 +2,11 @@
 #include <iostream>
 #include <string>
 #include <stdexcept>
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include <thread>
+#include <chrono>
 
 
 
@@ -12,7 +17,6 @@ inline bool ssl_verification(std::string url){
 
     if (curl == nullptr){
         throw  std::runtime_error("CURL err : curl == nullptr");
-        return false;
     }
 
 
@@ -35,7 +39,7 @@ inline bool ssl_verification(std::string url){
     if (res_perform != CURLE_OK){
 
         curl_easy_cleanup(curl);
-        return false;
+        throw std::runtime_error("CURL error : curl != CURLE_OK");
     }   
 
     char* scheme = nullptr;
@@ -62,7 +66,7 @@ inline bool https_verification(std::string url){
     CURL* curl = curl_easy_init();
 
     if (curl == nullptr){
-        return false;
+        throw std::runtime_error("CURL error : curl == nullptr");
     }
 
 
@@ -85,7 +89,7 @@ inline bool https_verification(std::string url){
     if (res_perform != CURLE_OK){
 
         curl_easy_cleanup(curl);
-        return false;
+        throw std::runtime_error("CURL error : curl != CURLE_OK");
     }   
 
     char* scheme = nullptr;
@@ -129,7 +133,6 @@ inline std::string tor_curl(const std::string& url, std::string user_agent, bool
 
 
     if (curl == nullptr){
-        curl_easy_cleanup(curl);
         throw std::runtime_error(std::string("CURL error: \033[31m curl == nullptr \033[0m"));
     }
 
@@ -174,4 +177,64 @@ inline std::string tor_curl(const std::string& url, std::string user_agent, bool
     curl_easy_cleanup(curl);
 
     return resultat;
+}
+
+
+
+
+
+
+inline bool creat_service(std::string name, std::string public_port, std::string local_port){
+
+    //création et configuration des repertoires liée au hidden service
+
+
+    std::string command_hidden_service = "sudo mkdir -p /var/lib/tor/" + name + " && ";
+    command_hidden_service += "sudo chown debian-tor:debian-tor /var/lib/tor/" + name + " && ";
+    command_hidden_service += "sudo chmod 700 /var/lib/tor/" + name;
+
+    if (std::system(command_hidden_service.c_str()) != 0 ){
+        std::cerr << "création des fichier na pas été faites\n";
+        return false;
+    }
+
+    //modification du fichier de configuration /etc/tor/torrc pour configurer le hidden service
+    std::ofstream torcc("/etc/tor/torrc", std::ios::app);
+
+
+    if (!torcc.is_open()){
+        std::cerr << "torcc n'est pas ouvert\n";
+        return false;
+    }
+
+    std::string command_torcc = "\nHiddenServiceDir /var/lib/tor/" + name + "\nHiddenServicePort " + public_port + " 127.0.0.1:" + local_port + "\n";
+    torcc.write(command_torcc.c_str(), command_torcc.size());
+
+    torcc.close();
+
+    if (std::system("sudo systemctl restart tor") != 0 || std::system("sudo systemctl is-active --quiet tor") != 0){
+        std::cerr << "tor na pas redemarrer\n";
+        return false;
+    }
+
+
+    //on a besoins de ce temps d'attantes sans quoi on lis le fichier avant même que il soit créer
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    std::ifstream hostname("/var/lib/tor/" + name + "/hostname");
+
+    if (!hostname.is_open()){
+        std::cerr << "fichier non ouvert\n" << "/var/lib/tor/" + name +"/hostname\n";
+        return false;
+    }
+
+    std::string content = "";
+    if(!std::getline(hostname, content)){
+        std::cerr << "impossible de lire le fichier\n";
+        return false;
+    }
+
+
+    std::cout <<"onion : " << content << std::endl;
+
+    return true;
 }
