@@ -7,6 +7,6 @@ RESET='\033[0m'
 GRAS='\033[1m'
 
 
-printf "${VERT}${GRAS}instalation des dépendances :${RESET}\n\n"
+printf "${GREEN}${GRAS}instalation des dépendances :${RESET}\n\n"
 apt install libcurl4-openssl-dev && apt install tor
 printf "\n"
