@@ -1,4 +1,5 @@
 #include <curl/curl.h>
+#include <curl/easy.h>
 #include <iostream>
 #include <string>
 #include <stdexcept>
@@ -7,6 +8,7 @@
 #include <fstream>
 #include <thread>
 #include <chrono>
+#include <unordered_map>
 
 
 
@@ -126,7 +128,42 @@ static inline size_t manage_data(char* data, size_t size, size_t nmemb, void* us
 
 
 
-inline std::string tor_curl(const std::string& url, std::string user_agent, bool redirection){
+/*cette fonction permet de transformer une variable de type unordered_map<string , string>
+en string qui respecte le format json*/
+inline std::string dump(std::unordered_map<std::string , std::string> header){
+
+    std::string container{"{\n"}; //ouverture du json 
+
+    int last_element = header.size() - 1;
+    int cpt{0};
+    
+    for (auto& i : header){
+
+        container += '"' + i.first + '"' + " : ";
+
+        //if we do not know the last element we will put "," at the end so the json will be invalid
+        if (cpt == last_element){
+            container += '"' + i.second + '"' + "\n";
+        } else {
+            container += '"' + i.second  + '"' + ",\n";
+        }
+
+        cpt += 1;
+    }
+
+    
+    container += "}";
+
+    return container;
+}
+
+
+
+inline std::string get(
+    const std::string& url,
+    const std::string user_agent, 
+    const bool redirection
+    ){
 
     // Initialize curl
     CURL* curl = curl_easy_init();
@@ -169,9 +206,8 @@ inline std::string tor_curl(const std::string& url, std::string user_agent, bool
     CURLcode res = curl_easy_perform(curl);
 
     if (res != CURLE_OK){
-        throw std::runtime_error(std::string("CURL error: ") + curl_easy_strerror(res));
         curl_easy_cleanup(curl);
-        return "err";
+        throw std::runtime_error(std::string("CURL error: ") + curl_easy_strerror(res));
     }
 
     curl_easy_cleanup(curl);
@@ -180,6 +216,85 @@ inline std::string tor_curl(const std::string& url, std::string user_agent, bool
 }
 
 
+inline std::string post(
+    const std::string& url,
+    const std::string user_agent, 
+    const bool redirection,
+    const std::unordered_map<std::string , std::string> raw_body
+    ){
+
+    // Initialize curl
+    CURL* curl = curl_easy_init();
+
+
+    if (curl == nullptr){
+        throw std::runtime_error(std::string("CURL error: \033[31m curl == nullptr \033[0m"));
+    }
+
+    std::string body = dump(raw_body);
+
+
+    // Initialize SOCKS5 with 'h' option for DNS resolution
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_PROXY, "socks5h://127.0.0.1:9050");
+
+    // Define user-agent
+    if (!user_agent.empty()){
+        curl_easy_setopt(curl, CURLOPT_USERAGENT, user_agent.c_str());
+    }
+
+
+    curl_easy_setopt(curl, CURLOPT_POST, 1L);
+
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.data());
+
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, body.size());
+
+
+
+    // Register callback function "manage_data" on call
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, manage_data);
+
+    // Retrieve curl result in the result variable
+    std::string resultat{""};
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &resultat);
+
+    // 0L option is set to avoid redirects, while 1L accepts them
+    if (redirection == false){
+
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 0L); 
+    }else{
+
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    } 
+
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 30L);
+
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 120L);
+
+    CURLcode res = curl_easy_perform(curl);
+
+    if (res != CURLE_OK){
+        curl_easy_cleanup(curl);
+        throw std::runtime_error(std::string("CURL error: ") + curl_easy_strerror(res));
+    }
+
+
+    long http_code = 0;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+
+
+    if (http_code < 200 || http_code >= 300) {
+
+         std::cerr << "HTTP CODE : " <<http_code << std::endl;
+
+    }
+
+
+    curl_easy_cleanup(curl);
+
+    return resultat;
+}
 
 
 inline bool creat_service(std::string name, std::string public_port, std::string local_port){
